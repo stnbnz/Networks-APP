@@ -13,7 +13,8 @@ export enum DeviceType {
   SERVER = 'SERVER',
   ACCESS_POINT = 'ACCESS_POINT',
   FIREWALL = 'FIREWALL',
-  WORKSTATION = 'WORKSTATION'
+  WORKSTATION = 'WORKSTATION',
+  OLT = 'OLT' // Added for ISP
 }
 
 export interface Device {
@@ -200,4 +201,54 @@ export interface SecurityEvent {
   severity: 'Critical' | 'High' | 'Medium';
   status: 'Blocked' | 'Detected';
   timestamp: string;
+}
+
+// --- ISP Specific Types ---
+
+export interface Subscriber {
+  id: string;
+  name: string;
+  accountNumber: string;
+  serviceType: 'PPPoE' | 'Static IP' | 'Hotspot';
+  planName: string;
+  status: 'Active' | 'Suspended' | 'Installation';
+  ip: string;
+  mac: string;
+  address: string;
+  balance: number;
+  monthlyFee: number;
+  signalStrength?: string; // e.g., -20dBm for fiber
+}
+
+export interface BandwidthPlan {
+  id: string;
+  name: string;
+  downloadSpeed: number; // Mbps
+  uploadSpeed: number; // Mbps
+  price: number;
+  subscribers: number;
+}
+
+export interface OnuDevice {
+  id: string;
+  serialNumber: string;
+  name: string;
+  oltPort: string; // e.g., PON 1/2
+  signalRx: number; // dBm
+  distance: number; // meters
+  status: 'Online' | 'Offline' | 'Power Fail';
+  linkedSubscriberId?: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  subscriberId?: string;
+  subscriberName: string;
+  subject: string;
+  status: 'Open' | 'In Progress' | 'Resolved' | 'Closed';
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  category: 'No Internet' | 'Slow Connection' | 'Billing' | 'Installation';
+  created: string;
+  assignedTo?: string;
+  messages: { sender: string; text: string; time: string }[];
 }

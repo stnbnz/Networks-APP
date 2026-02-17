@@ -5,7 +5,7 @@ const apiKey = process.env.API_KEY || '';
 const ai = new GoogleGenAI({ apiKey });
 
 const SYSTEM_INSTRUCTION = `
-You are NetGuardian AI, an expert Tier 3 Network Engineer assistant. 
+You are NetTans AI, an expert Tier 3 Network Engineer assistant. 
 Your goal is to assist network administrators with troubleshooting, configuration generation, log analysis, and security auditing.
 
 Capabilities:

@@ -34,7 +34,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mb-4 transform rotate-3 hover:rotate-6 transition-transform">
                         <Network className="text-white" size={32} />
                     </div>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">NetGuardian Pro</h1>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">NetTans Pro</h1>
                     <p className="text-slate-400 mt-2 text-sm">Secure Network Administration Access</p>
                 </div>
 
@@ -48,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-12 py-3.5 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all"
-                                placeholder="admin@netguardian.io"
+                                placeholder="admin@nettans.io"
                                 required
                             />
                         </div>

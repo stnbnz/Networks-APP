@@ -117,7 +117,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ devices, alerts }) => {
             </div>
             <div>
                 <h2 className="font-semibold text-white flex items-center gap-2">
-                    NetGuardian AI <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 border border-green-500/30">ONLINE</span>
+                    NetTans AI <span className="px-1.5 py-0.5 rounded text-[10px] bg-green-500/20 text-green-400 border border-green-500/30">ONLINE</span>
                 </h2>
                 <p className="text-xs text-slate-400">Context-Aware Network Assistant</p>
             </div>
@@ -193,7 +193,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ devices, alerts }) => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask NetGuardian about your network status, logs, or configuration..."
+            placeholder="Ask NetTans AI about your network status, logs, or configuration..."
             className="w-full bg-slate-800 text-slate-100 pl-4 pr-12 py-3.5 rounded-xl border border-slate-600 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 placeholder-slate-500 shadow-inner"
             autoComplete="off"
           />
@@ -206,7 +206,7 @@ const AiAssistant: React.FC<AiAssistantProps> = ({ devices, alerts }) => {
           </button>
         </div>
         <p className="text-center text-[10px] text-slate-600 pb-2">
-            NetGuardian AI processes live dashboard data. Verify critical actions manually.
+            NetTans AI processes live dashboard data. Verify critical actions manually.
         </p>
       </div>
     </div>

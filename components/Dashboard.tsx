@@ -26,8 +26,11 @@ const dataProtocols = [
   { name: 'Other', value: 10, color: '#64748b' },
 ];
 
-const StatCard = ({ title, value, subtext, icon: Icon, colorClass, trend }: any) => (
-    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden group">
+const StatCard = ({ title, value, subtext, icon: Icon, colorClass, trend, delay }: any) => (
+    <div 
+      className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg relative overflow-hidden group animate-slide-up" 
+      style={{ animationDelay: `${delay}ms` }}
+    >
         <div className={`absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 duration-500`}>
              <Icon size={80} className={colorClass.replace('bg-', 'text-').replace('/20', '')} />
         </div>
@@ -77,6 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
             icon={Server} 
             colorClass="bg-blue-500 text-blue-500"
             trend={2}
+            delay={0}
         />
         <StatCard 
             title="Critical Issues" 
@@ -85,6 +89,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
             icon={AlertTriangle} 
             colorClass="bg-red-500 text-red-500"
             trend={-5}
+            delay={100}
         />
         <StatCard 
             title="System Health" 
@@ -92,6 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
             subtext="Global Uptime"
             icon={CheckCircle} 
             colorClass="bg-green-500 text-green-500"
+            delay={200}
         />
         <StatCard 
             title="Net Throughput" 
@@ -100,13 +106,14 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
             icon={Activity} 
             colorClass="bg-purple-500 text-purple-500"
             trend={8}
+            delay={300}
         />
       </div>
 
       {/* Row 2: Traffic & Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Traffic Chart (Main) */}
-        <div className="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+        <div className="lg:col-span-2 bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg animate-slide-up" style={{ animationDelay: '400ms' }}>
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h3 className="text-lg font-bold text-white">Network Traffic Volume</h3>
@@ -145,7 +152,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
         </div>
 
         {/* Device Status Donut */}
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex flex-col">
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex flex-col animate-slide-up" style={{ animationDelay: '500ms' }}>
             <h3 className="text-lg font-bold text-white mb-2">Device Status</h3>
             <p className="text-xs text-slate-400 mb-6">Real-time availability distribution</p>
             
@@ -200,7 +207,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* High CPU Load Devices */}
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg animate-slide-up" style={{ animationDelay: '600ms' }}>
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Cpu size={18} className="text-orange-500"/> Top High-Load Devices
             </h3>
@@ -227,7 +234,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
         </div>
 
         {/* Protocol Distribution */}
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg animate-slide-up" style={{ animationDelay: '700ms' }}>
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                 <Zap size={18} className="text-blue-500"/> Protocol Distribution
             </h3>
@@ -252,7 +259,7 @@ const Dashboard: React.FC<DashboardProps> = ({ devices, alerts }) => {
         </div>
 
         {/* Recent Alerts Feed */}
-        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex flex-col">
+        <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg flex flex-col animate-slide-up" style={{ animationDelay: '800ms' }}>
             <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                     <Shield size={18} className="text-primary-500"/> Security Feed

@@ -47,7 +47,7 @@ const Settings: React.FC = () => {
                   <label className="block text-sm font-medium text-slate-400 mb-2">Email Address</label>
                   <div className="relative">
                       <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                      <input type="email" defaultValue="admin@netguardian.io" className="w-full bg-slate-900 border border-slate-600 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:ring-1 focus:ring-primary-500 outline-none" />
+                      <input type="email" defaultValue="admin@nettans.io" className="w-full bg-slate-900 border border-slate-600 rounded-lg pl-10 pr-4 py-2.5 text-slate-200 focus:ring-1 focus:ring-primary-500 outline-none" />
                   </div>
               </div>
           </div>

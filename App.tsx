@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Network, Server, Settings, MessageSquare, Menu, Bell, Search, User, FileCode, FileText, Wrench, Database, Shield, PieChart, Cable, Terminal, Clock, Rewind, Wifi, Archive, Lock, Maximize, Minimize } from 'lucide-react';
+import { LayoutDashboard, Network, Server, Settings, MessageSquare, Menu, Bell, Search, User, FileCode, FileText, Wrench, Database, Shield, PieChart, Cable, Terminal, Clock, Rewind, Wifi, Archive, Lock, Maximize, Minimize, Users, Zap, Radio, Headphones } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import DeviceList from './components/DeviceList';
 import TopologyMap from './components/TopologyMap';
@@ -9,7 +9,7 @@ import LogViewer from './components/LogViewer';
 import NetworkTools from './components/NetworkTools';
 import SettingsPage from './components/Settings';
 import Ipam from './components/Ipam';
-import FirewallBuilder from './components/FirewallBuilder';
+import SupportTickets from './components/SupportTickets';
 import Reports from './components/Reports';
 import PortManager from './components/PortManager';
 import Automation from './components/Automation';
@@ -20,8 +20,11 @@ import HotspotManager from './components/HotspotManager';
 import AccessControl from './components/AccessControl';
 import BackupManager from './components/BackupManager';
 import SecurityMonitor from './components/SecurityMonitor';
+import SubscriberManager from './components/SubscriberManager';
+import OltManager from './components/OltManager';
+import TrafficShaping from './components/TrafficShaping';
 import Login from './components/Login';
-import { Device, Alert, DeviceStatus, DeviceType, NetworkData, HotspotUser, AdminUser, BackupFile, AutomationTask, FirewallRule, SecurityEvent } from './types';
+import { Device, Alert, DeviceStatus, DeviceType, NetworkData, HotspotUser, AdminUser, BackupFile, AutomationTask, SecurityEvent, Subscriber, BandwidthPlan, OnuDevice, SupportTicket } from './types';
 
 // -- Mock Configs --
 const CISCO_CONFIG = `
@@ -87,9 +90,28 @@ const INITIAL_DEVICES: Device[] = [
   { id: '3', name: 'Dist-Switch-B', ip: '10.0.2.1', mac: '00:1A:2B:3C:4D:60', type: DeviceType.SWITCH, status: DeviceStatus.WARNING, uptime: '5d 2h', location: 'Building 2 - MDF', lastSeen: '2m ago', config: SWITCH_CONFIG.replace('Dist-Switch-A', 'Dist-Switch-B'), cpu: 88, ram: 40, temp: 55 },
   { id: '4', name: 'Firewall-Main', ip: '10.0.0.254', mac: '00:1A:2B:3C:4D:61', type: DeviceType.FIREWALL, status: DeviceStatus.ONLINE, uptime: '200d 1h', location: 'Data Center A', lastSeen: 'Now', config: '# Firewall Rules\nallow 10.0.0.0/24 any', cpu: 25, ram: 50, temp: 40 },
   { id: '5', name: 'Web-Server-01', ip: '10.0.10.5', mac: '00:1A:2B:3C:4D:62', type: DeviceType.SERVER, status: DeviceStatus.ONLINE, uptime: '12d 6h', location: 'Data Center A', lastSeen: 'Now', cpu: 10, ram: 80, temp: 35 },
-  { id: '6', name: 'DB-Server-01', ip: '10.0.10.6', mac: '00:1A:2B:3C:4D:63', type: DeviceType.SERVER, status: DeviceStatus.MAINTENANCE, uptime: '0d 0h', location: 'Data Center A', lastSeen: '1h ago', cpu: 0, ram: 0, temp: 0 },
-  { id: '7', name: 'Wifi-AP-Lobby', ip: '10.0.50.10', mac: '00:1A:2B:3C:4D:64', type: DeviceType.ACCESS_POINT, status: DeviceStatus.ONLINE, uptime: '30d 12h', location: 'Lobby', lastSeen: 'Now', cpu: 55, ram: 60, temp: 45 },
-  { id: '8', name: 'Wifi-AP-Conf', ip: '10.0.50.11', mac: '00:1A:2B:3C:4D:65', type: DeviceType.ACCESS_POINT, status: DeviceStatus.OFFLINE, uptime: '0d 0h', location: 'Conf Room B', lastSeen: '2h ago', cpu: 0, ram: 0, temp: 0 },
+  { id: '99', name: 'GPON-OLT-Huawei', ip: '10.0.200.1', mac: 'AA:BB:CC:DD:EE:FF', type: DeviceType.OLT, status: DeviceStatus.ONLINE, uptime: '120d', location: 'Server Room', lastSeen: 'Now', config: '', cpu: 20, ram: 40, temp: 38},
+];
+
+const INITIAL_SUBSCRIBERS: Subscriber[] = [
+    { id: '1', name: 'John Doe', accountNumber: 'CUST-001', serviceType: 'PPPoE', planName: 'Fiber 100 Mbps', status: 'Active', ip: '100.64.10.5', mac: '11:22:33:44:55:66', address: '123 Main St, Apt 4B', balance: 0, monthlyFee: 49.99, signalStrength: '-18.5' },
+    { id: '2', name: 'Jane Smith', accountNumber: 'CUST-002', serviceType: 'PPPoE', planName: 'Fiber 50 Mbps', status: 'Active', ip: '100.64.10.6', mac: 'AA:BB:CC:DD:EE:FF', address: '456 Oak Ave', balance: 0, monthlyFee: 29.99, signalStrength: '-22.1' },
+    { id: '3', name: 'Coffee Shop LLC', accountNumber: 'BIZ-001', serviceType: 'Static IP', planName: 'Biz Fiber 500', status: 'Active', ip: '203.0.113.10', mac: 'CC:DD:EE:11:22:33', address: '789 Business Park', balance: -150.00, monthlyFee: 150.00, signalStrength: '-16.2' },
+    { id: '4', name: 'Late Payer', accountNumber: 'CUST-003', serviceType: 'PPPoE', planName: 'Fiber 20 Mbps', status: 'Suspended', ip: 'N/A', mac: '11:11:11:11:11:11', address: '99 Deadend Rd', balance: 60.00, monthlyFee: 19.99, signalStrength: 'N/A' },
+];
+
+const INITIAL_PLANS: BandwidthPlan[] = [
+    { id: '1', name: 'Fiber 20 Mbps', downloadSpeed: 20, uploadSpeed: 20, price: 19.99, subscribers: 150 },
+    { id: '2', name: 'Fiber 50 Mbps', downloadSpeed: 50, uploadSpeed: 25, price: 29.99, subscribers: 340 },
+    { id: '3', name: 'Fiber 100 Mbps', downloadSpeed: 100, uploadSpeed: 50, price: 49.99, subscribers: 120 },
+    { id: '4', name: 'Biz Fiber 500', downloadSpeed: 500, uploadSpeed: 500, price: 150.00, subscribers: 15 },
+];
+
+const INITIAL_ONUS: OnuDevice[] = [
+    { id: '1', serialNumber: 'HWTC12345678', name: 'ONU-JohnDoe', oltPort: 'PON 0/1/1', signalRx: -18.5, distance: 1200, status: 'Online', linkedSubscriberId: '1' },
+    { id: '2', serialNumber: 'HWTC87654321', name: 'ONU-JaneSmith', oltPort: 'PON 0/1/1', signalRx: -22.1, distance: 3400, status: 'Online', linkedSubscriberId: '2' },
+    { id: '3', serialNumber: 'ZTEG11223344', name: 'ONU-CoffeeShop', oltPort: 'PON 0/1/2', signalRx: -16.2, distance: 400, status: 'Online', linkedSubscriberId: '3' },
+    { id: '4', serialNumber: 'ZTEG99887766', name: 'ONU-LatePayer', oltPort: 'PON 0/1/3', signalRx: -99, distance: 0, status: 'Power Fail', linkedSubscriberId: '4' },
 ];
 
 const INITIAL_HOTSPOT_USERS: HotspotUser[] = [
@@ -100,10 +122,10 @@ const INITIAL_HOTSPOT_USERS: HotspotUser[] = [
 ];
 
 const INITIAL_ADMINS: AdminUser[] = [
-    { id: '1', name: 'Super Admin', email: 'admin@netguardian.io', role: 'Super Admin', lastLogin: 'Just now', status: 'Active', twoFactor: true },
-    { id: '2', name: 'NOC Operator 1', email: 'noc1@netguardian.io', role: 'NOC Operator', lastLogin: '2 hours ago', status: 'Active', twoFactor: true },
-    { id: '3', name: 'Junior Tech', email: 'tech@netguardian.io', role: 'Viewer', lastLogin: 'Yesterday', status: 'Active', twoFactor: false },
-    { id: '4', name: 'Former Employee', email: 'audit@netguardian.io', role: 'Network Admin', lastLogin: '30 days ago', status: 'Locked', twoFactor: false },
+    { id: '1', name: 'Super Admin', email: 'admin@nettans.io', role: 'Super Admin', lastLogin: 'Just now', status: 'Active', twoFactor: true },
+    { id: '2', name: 'NOC Operator 1', email: 'noc1@nettans.io', role: 'NOC Operator', lastLogin: '2 hours ago', status: 'Active', twoFactor: true },
+    { id: '3', name: 'Junior Tech', email: 'tech@nettans.io', role: 'Viewer', lastLogin: 'Yesterday', status: 'Active', twoFactor: false },
+    { id: '4', name: 'Former Employee', email: 'audit@nettans.io', role: 'Network Admin', lastLogin: '30 days ago', status: 'Locked', twoFactor: false },
 ];
 
 const INITIAL_BACKUPS: BackupFile[] = [
@@ -119,16 +141,16 @@ const INITIAL_TASKS: AutomationTask[] = [
     { id: '4', name: 'Reboot Guest Wifi APs', type: 'SCRIPT', targetGroup: 'Access Points', schedule: '0 3 * * SUN', lastRun: 'Sun, 03:00 AM', status: 'SUCCESS', nextRun: 'Next Sun, 03:00 AM' },
 ];
 
-const INITIAL_FW_RULES: FirewallRule[] = [
-  { id: '1', sequence: 10, action: 'ALLOW', protocol: 'TCP', source: '10.0.0.0/24', destination: 'ANY', port: '80, 443', description: 'Allow Web Traffic Outbound' },
-  { id: '2', sequence: 20, action: 'ALLOW', protocol: 'TCP', source: '10.0.50.0/23', destination: '10.0.10.5', port: '3306', description: 'Allow App to DB' },
-  { id: '3', sequence: 30, action: 'DENY', protocol: 'ANY', source: 'ANY', destination: 'ANY', port: 'ANY', description: 'Implicit Deny' },
-];
-
 const INITIAL_THREATS: SecurityEvent[] = [
     { id: '1', type: 'Brute Force', sourceIp: '192.168.100.45', targetIp: '10.0.0.1 (Core)', location: 'Internal', severity: 'High', status: 'Blocked', timestamp: '10:45:00' },
     { id: '2', type: 'Port Scan', sourceIp: '45.33.22.11', targetIp: '10.0.0.254 (FW)', location: 'Russia', severity: 'Medium', status: 'Blocked', timestamp: '10:42:15' },
     { id: '3', type: 'DDoS', sourceIp: 'Unknown (Botnet)', targetIp: '10.0.10.5 (Web)', location: 'Global', severity: 'Critical', status: 'Detected', timestamp: '10:30:00' },
+];
+
+const INITIAL_TICKETS: SupportTicket[] = [
+    { id: '1001', subscriberId: '1', subscriberName: 'John Doe', subject: 'Internet is very slow tonight', status: 'Open', priority: 'Medium', category: 'Slow Connection', created: '10 mins ago', messages: [{sender: 'Customer', text: 'I am only getting 5mbps but pay for 100.', time: '10 mins ago'}] },
+    { id: '1002', subscriberId: '4', subscriberName: 'Late Payer', subject: 'Why is my internet suspended?', status: 'Closed', priority: 'Low', category: 'Billing', created: '2 days ago', assignedTo: 'Billing Dept', messages: [{sender: 'Customer', text: 'I paid yesterday.', time: '2 days ago'}, {sender: 'Admin', text: 'Payment received. Service restored.', time: '1 day ago'}] },
+    { id: '1003', subscriberName: 'New Resident', subject: 'Installation inquiry for 555 Pine St', status: 'Open', priority: 'Low', category: 'Installation', created: '1 hour ago', messages: [{sender: 'Customer', text: 'Do you cover this area?', time: '1 hour ago'}] },
 ];
 
 const MOCK_ALERTS: Alert[] = [
@@ -142,10 +164,10 @@ const MOCK_ALERTS: Alert[] = [
 const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
   <button 
     onClick={onClick}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
       active 
-        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/50' 
-        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+        ? 'bg-primary-600 text-white shadow-lg shadow-primary-900/50 scale-105' 
+        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100 hover:translate-x-1'
     }`}
   >
     <Icon size={20} />
@@ -155,7 +177,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'topology' | 'ai' | 'config' | 'logs' | 'tools' | 'settings' | 'ipam' | 'firewall' | 'reports' | 'ports' | 'automation' | 'terminal' | 'dvr' | 'hotspot' | 'access' | 'backup' | 'security'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'topology' | 'ai' | 'config' | 'logs' | 'tools' | 'settings' | 'ipam' | 'tickets' | 'reports' | 'ports' | 'automation' | 'terminal' | 'dvr' | 'hotspot' | 'access' | 'backup' | 'security' | 'subscribers' | 'olt' | 'traffic'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedConfigDevice, setSelectedConfigDevice] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -166,8 +188,13 @@ const App: React.FC = () => {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(INITIAL_ADMINS);
   const [backups, setBackups] = useState<BackupFile[]>(INITIAL_BACKUPS);
   const [automationTasks, setAutomationTasks] = useState<AutomationTask[]>(INITIAL_TASKS);
-  const [fwRules, setFwRules] = useState<FirewallRule[]>(INITIAL_FW_RULES);
   const [threats, setThreats] = useState<SecurityEvent[]>(INITIAL_THREATS);
+  const [tickets, setTickets] = useState<SupportTicket[]>(INITIAL_TICKETS);
+  
+  // ISP STATE
+  const [subscribers, setSubscribers] = useState<Subscriber[]>(INITIAL_SUBSCRIBERS);
+  const [plans, setPlans] = useState<BandwidthPlan[]>(INITIAL_PLANS);
+  const [onus, setOnus] = useState<OnuDevice[]>(INITIAL_ONUS);
 
   // Command Palette State
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
@@ -250,6 +277,7 @@ const App: React.FC = () => {
       { source: 'Dist-Switch-A', target: 'DB-Server-01', value: 1 },
       { source: 'Dist-Switch-B', target: 'Wifi-AP-Lobby', value: 1 },
       { source: 'Dist-Switch-B', target: 'Wifi-AP-Conf', value: 1 },
+      { source: 'Core-Router-01', target: 'GPON-OLT-Huawei', value: 3},
     ].filter(l => 
         // Filter links if devices are deleted
         devices.some(d => d.name === l.source) && devices.some(d => d.name === l.target)
@@ -283,30 +311,35 @@ const App: React.FC = () => {
           <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg mr-3 flex items-center justify-center shadow-lg">
              <Network className="text-white" size={20}/>
           </div>
-          <span className="font-bold text-lg tracking-tight">NetGuardian</span>
+          <span className="font-bold text-lg tracking-tight">NetTans ISP</span>
         </div>
 
         {/* Sidebar Navigation: Added min-h-0 to ensure flex shrinking and scrolling work properly */}
         <div className="p-4 space-y-2 flex-1 overflow-y-auto min-h-0">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-2">Overview</div>
           <SidebarItem icon={LayoutDashboard} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
-          <SidebarItem icon={Server} label="Inventory" active={activeTab === 'devices'} onClick={() => setActiveTab('devices')} />
+          <SidebarItem icon={Server} label="Devices" active={activeTab === 'devices'} onClick={() => setActiveTab('devices')} />
           <SidebarItem icon={Network} label="Topology Map" active={activeTab === 'topology'} onClick={() => setActiveTab('topology')} />
-          <SidebarItem icon={Cable} label="Port Mapper" active={activeTab === 'ports'} onClick={() => setActiveTab('ports')} />
           
-          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">Management</div>
-          <SidebarItem icon={Terminal} label="Web CLI" active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} />
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">ISP Operations</div>
+          <SidebarItem icon={Users} label="Subscribers" active={activeTab === 'subscribers'} onClick={() => setActiveTab('subscribers')} />
+          <SidebarItem icon={Headphones} label="Helpdesk / Support" active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')} />
+          <SidebarItem icon={Radio} label="OLT & PON" active={activeTab === 'olt'} onClick={() => setActiveTab('olt')} />
+          <SidebarItem icon={Zap} label="Traffic Shaping" active={activeTab === 'traffic'} onClick={() => setActiveTab('traffic')} />
           <SidebarItem icon={Wifi} label="Hotspot Manager" active={activeTab === 'hotspot'} onClick={() => setActiveTab('hotspot')} />
+          
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">Network Mgmt</div>
           <SidebarItem icon={Database} label="IPAM" active={activeTab === 'ipam'} onClick={() => setActiveTab('ipam')} />
+          <SidebarItem icon={Cable} label="Port Mapper" active={activeTab === 'ports'} onClick={() => setActiveTab('ports')} />
           <SidebarItem icon={FileCode} label="Configuration" active={activeTab === 'config'} onClick={() => setActiveTab('config')} />
-          <SidebarItem icon={Archive} label="Backup & Restore" active={activeTab === 'backup'} onClick={() => setActiveTab('backup')} />
+          <SidebarItem icon={Archive} label="Backups" active={activeTab === 'backup'} onClick={() => setActiveTab('backup')} />
           <SidebarItem icon={Clock} label="Automation" active={activeTab === 'automation'} onClick={() => setActiveTab('automation')} />
-          <SidebarItem icon={Wrench} label="Tools" active={activeTab === 'tools'} onClick={() => setActiveTab('tools')} />
+          <SidebarItem icon={Terminal} label="Web CLI" active={activeTab === 'terminal'} onClick={() => setActiveTab('terminal')} />
           
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">Intelligence</div>
           <SidebarItem icon={Shield} label="Security Center" active={activeTab === 'security'} onClick={() => setActiveTab('security')} />
           <SidebarItem icon={Rewind} label="Network DVR" active={activeTab === 'dvr'} onClick={() => setActiveTab('dvr')} />
-          <SidebarItem icon={FileText} label="System Logs" active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} />
+          <SidebarItem icon={FileText} label="Logs" active={activeTab === 'logs'} onClick={() => setActiveTab('logs')} />
           <SidebarItem icon={PieChart} label="Reports" active={activeTab === 'reports'} onClick={() => setActiveTab('reports')} />
           <SidebarItem icon={MessageSquare} label="AI Assistant" active={activeTab === 'ai'} onClick={() => setActiveTab('ai')} />
           
@@ -322,7 +355,7 @@ const App: React.FC = () => {
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-medium truncate">Admin User</p>
-              <p className="text-xs text-slate-500 truncate">admin@netguardian.io</p>
+              <p className="text-xs text-slate-500 truncate">admin@nettans.io</p>
             </div>
           </div>
         </div>
@@ -364,49 +397,54 @@ const App: React.FC = () => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 bg-slate-950 overflow-hidden flex flex-col min-h-0">
+        <main className="flex-1 bg-slate-950 overflow-hidden flex flex-col min-h-0 relative">
           
-          {isScrollableTab(activeTab) ? (
-              // Scrollable Document View (Dashboard, Reports, Settings)
-              <div className="flex-1 overflow-y-auto p-6">
-                {activeTab === 'dashboard' && <Dashboard devices={devices} alerts={MOCK_ALERTS} />}
-                {activeTab === 'reports' && <Reports />}
-                {activeTab === 'settings' && <SettingsPage />}
-              </div>
-          ) : (
-              // Fixed App View (Apps that manage their own scroll/layout)
-              <div className="flex-1 p-6 h-full flex flex-col overflow-hidden">
-                {activeTab === 'devices' && (
-                    <DeviceList 
-                        devices={devices} 
-                        onConfigure={handleConfigureDevice} 
-                        onAddDevice={handleAddDevice}
-                        onDeleteDevice={handleDeleteDevice}
-                    />
-                )}
-                {activeTab === 'topology' && <TopologyMap data={MOCK_TOPOLOGY} onNavigate={handleNavigate} />}
-                {activeTab === 'ipam' && <Ipam />}
-                {activeTab === 'config' && (
-                    <ConfigManager 
-                        devices={devices} 
-                        selectedDeviceId={selectedConfigDevice} 
-                        onUpdateConfig={handleUpdateConfig} 
-                    />
-                )}
-                {activeTab === 'firewall' && <FirewallBuilder rules={fwRules} setRules={setFwRules} />}
-                {activeTab === 'tools' && <NetworkTools />}
-                {activeTab === 'logs' && <LogViewer />}
-                {activeTab === 'ai' && <AiAssistant devices={devices} alerts={MOCK_ALERTS} />}
-                {activeTab === 'ports' && <PortManager />}
-                {activeTab === 'automation' && <Automation tasks={automationTasks} setTasks={setAutomationTasks} />}
-                {activeTab === 'terminal' && <WebTerminal />}
-                {activeTab === 'dvr' && <NetworkDVR devices={devices} />}
-                {activeTab === 'hotspot' && <HotspotManager users={hotspotUsers} setUsers={setHotspotUsers} />}
-                {activeTab === 'access' && <AccessControl users={adminUsers} setUsers={setAdminUsers} />}
-                {activeTab === 'backup' && <BackupManager backups={backups} setBackups={setBackups} />}
-                {activeTab === 'security' && <SecurityMonitor threats={threats} setThreats={setThreats} />}
-              </div>
-          )}
+          <div key={activeTab} className="h-full w-full animate-fade-in flex flex-col">
+            {isScrollableTab(activeTab) ? (
+                // Scrollable Document View (Dashboard, Reports, Settings)
+                <div className="flex-1 overflow-y-auto p-6">
+                  {activeTab === 'dashboard' && <Dashboard devices={devices} alerts={MOCK_ALERTS} />}
+                  {activeTab === 'reports' && <Reports />}
+                  {activeTab === 'settings' && <SettingsPage />}
+                </div>
+            ) : (
+                // Fixed App View (Apps that manage their own scroll/layout)
+                <div className="flex-1 p-6 h-full flex flex-col overflow-hidden">
+                  {activeTab === 'devices' && (
+                      <DeviceList 
+                          devices={devices} 
+                          onConfigure={handleConfigureDevice} 
+                          onAddDevice={handleAddDevice} 
+                          onDeleteDevice={handleDeleteDevice}
+                      />
+                  )}
+                  {activeTab === 'subscribers' && <SubscriberManager subscribers={subscribers} setSubscribers={setSubscribers} />}
+                  {activeTab === 'olt' && <OltManager onus={onus} />}
+                  {activeTab === 'traffic' && <TrafficShaping plans={plans} setPlans={setPlans} />}
+                  {activeTab === 'topology' && <TopologyMap data={MOCK_TOPOLOGY} onNavigate={handleNavigate} />}
+                  {activeTab === 'ipam' && <Ipam />}
+                  {activeTab === 'config' && (
+                      <ConfigManager 
+                          devices={devices} 
+                          selectedDeviceId={selectedConfigDevice} 
+                          onUpdateConfig={handleUpdateConfig} 
+                      />
+                  )}
+                  {activeTab === 'tickets' && <SupportTickets tickets={tickets} setTickets={setTickets} />}
+                  {activeTab === 'tools' && <NetworkTools />}
+                  {activeTab === 'logs' && <LogViewer />}
+                  {activeTab === 'ai' && <AiAssistant devices={devices} alerts={MOCK_ALERTS} />}
+                  {activeTab === 'ports' && <PortManager />}
+                  {activeTab === 'automation' && <Automation tasks={automationTasks} setTasks={setAutomationTasks} />}
+                  {activeTab === 'terminal' && <WebTerminal />}
+                  {activeTab === 'dvr' && <NetworkDVR devices={devices} />}
+                  {activeTab === 'hotspot' && <HotspotManager users={hotspotUsers} setUsers={setHotspotUsers} />}
+                  {activeTab === 'access' && <AccessControl users={adminUsers} setUsers={setAdminUsers} />}
+                  {activeTab === 'backup' && <BackupManager backups={backups} setBackups={setBackups} />}
+                  {activeTab === 'security' && <SecurityMonitor threats={threats} setThreats={setThreats} />}
+                </div>
+            )}
+          </div>
         </main>
       </div>
     </div>

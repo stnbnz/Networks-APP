@@ -117,7 +117,7 @@ const CommandPalette: React.FC<CommandPaletteProps> = ({ isOpen, onClose, onNavi
         
         <div className="p-2 bg-slate-950 border-t border-slate-800 text-xs text-slate-500 flex justify-between px-4">
             <span>ProTip: Use arrow keys to navigate</span>
-            <span>NetGuardian Command Line</span>
+            <span>NetTans Command Line</span>
         </div>
       </div>
     </div>

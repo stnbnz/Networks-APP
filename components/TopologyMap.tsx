@@ -9,7 +9,7 @@ import {
   Simulation 
 } from 'd3';
 import { NetworkData, NetworkNode, NetworkLink, DeviceType, DeviceStatus } from '../types';
-import { Terminal, Settings, Activity, X } from 'lucide-react';
+import { Terminal, Settings, Activity, X, Layers, Filter } from 'lucide-react';
 
 interface TopologyMapProps {
   data: NetworkData;
@@ -19,9 +19,26 @@ interface TopologyMapProps {
 const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
+  const [showAccessLayer, setShowAccessLayer] = useState(true);
+
+  // Filter Data based on Layer View
+  const filteredNodes = showAccessLayer 
+    ? data.nodes 
+    : data.nodes.filter(n => n.type !== DeviceType.ACCESS_POINT && n.type !== DeviceType.WORKSTATION); // Hide Edge devices
+
+  const filteredLinks = showAccessLayer
+    ? data.links
+    : data.links.filter(l => {
+        const sourceId = typeof l.source === 'object' ? (l.source as any).id : l.source;
+        const targetId = typeof l.target === 'object' ? (l.target as any).id : l.target;
+        const sourceNode = data.nodes.find(n => n.id === sourceId);
+        const targetNode = data.nodes.find(n => n.id === targetId);
+        // Only keep links where both nodes are visible
+        return (sourceNode && sourceNode.type !== DeviceType.ACCESS_POINT) && (targetNode && targetNode.type !== DeviceType.ACCESS_POINT);
+    });
 
   useEffect(() => {
-    if (!svgRef.current || !data.nodes.length) return;
+    if (!svgRef.current || !filteredNodes.length) return;
 
     const width = svgRef.current.clientWidth;
     const height = 600;
@@ -34,8 +51,8 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
       .style("font", "12px sans-serif");
 
     // Simulation setup
-    const simulation = forceSimulation(data.nodes)
-      .force("link", forceLink(data.links).id((d: any) => d.id).distance(100))
+    const simulation = forceSimulation(filteredNodes)
+      .force("link", forceLink(filteredLinks).id((d: any) => d.id).distance(100))
       .force("charge", forceManyBody().strength(-400))
       .force("center", forceCenter(width / 2, height / 2));
 
@@ -44,7 +61,7 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
       .attr("stroke", "#475569")
       .attr("stroke-opacity", 0.6)
       .selectAll("line")
-      .data(data.links)
+      .data(filteredLinks)
       .join("line")
       .attr("stroke-width", (d) => Math.sqrt(d.value || 1) * 2);
 
@@ -53,7 +70,7 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
       .attr("stroke", "#fff")
       .attr("stroke-width", 1.5)
       .selectAll("g")
-      .data(data.nodes)
+      .data(filteredNodes)
       .join("g")
       .attr("cursor", "pointer")
       .call(drag(simulation) as any)
@@ -80,6 +97,7 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
         switch(d.type) {
             case DeviceType.ROUTER: return "R";
             case DeviceType.SWITCH: return "S";
+            case DeviceType.OLT: return "OLT";
             case DeviceType.SERVER: return "SRV";
             case DeviceType.FIREWALL: return "FW";
             default: return "D";
@@ -146,10 +164,22 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
     return () => {
       simulation.stop();
     };
-  }, [data]);
+  }, [data, showAccessLayer]);
 
   return (
     <div className="w-full h-full bg-slate-900 rounded-lg shadow-inner overflow-hidden border border-slate-700 relative">
+       {/* Filter Controls */}
+       <div className="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur border border-slate-700 p-2 rounded-lg shadow-lg flex items-center gap-2">
+           <Layers size={16} className="text-slate-400"/>
+           <span className="text-xs font-bold text-slate-300 mr-2">Layers:</span>
+           <button 
+                onClick={() => setShowAccessLayer(!showAccessLayer)}
+                className={`px-3 py-1 rounded text-xs transition-colors ${showAccessLayer ? 'bg-primary-600 text-white' : 'bg-slate-700 text-slate-400'}`}
+            >
+                {showAccessLayer ? 'Show Access Layer' : 'Hide Access Layer'}
+           </button>
+       </div>
+
        <svg ref={svgRef} className="w-full h-[600px] cursor-move"></svg>
        
        {/* Interactive Node Details Panel */}
