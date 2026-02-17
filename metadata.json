@@ -1,0 +1,5 @@
+{
+  "name": "NetGuardian Pro",
+  "description": "A professional Network Administration Dashboard featuring real-time monitoring, device management, interactive topology visualization, and an AI-powered network assistant using Gemini.",
+  "requestFramePermissions": []
+}
