@@ -63,7 +63,7 @@ const NetworkDVR: React.FC<NetworkDVRProps> = ({ devices }) => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1000); // ms per step
 
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const currentSnapshot = history[currentIndex];
 

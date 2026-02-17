@@ -19,12 +19,13 @@ interface TopologyMapProps {
 const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const [selectedNode, setSelectedNode] = useState<NetworkNode | null>(null);
-  const [showAccessLayer, setShowAccessLayer] = useState(true);
+  const [showAccessLayer, setShowAccessLayer] = useState(false); // Default false for ISP scale
 
   // Filter Data based on Layer View
+  // ISP optimization: Hide "End User" devices (Access Points, Workstations) to avoid clutter
   const filteredNodes = showAccessLayer 
     ? data.nodes 
-    : data.nodes.filter(n => n.type !== DeviceType.ACCESS_POINT && n.type !== DeviceType.WORKSTATION); // Hide Edge devices
+    : data.nodes.filter(n => n.type !== DeviceType.ACCESS_POINT && n.type !== DeviceType.WORKSTATION);
 
   const filteredLinks = showAccessLayer
     ? data.links
@@ -34,7 +35,9 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
         const sourceNode = data.nodes.find(n => n.id === sourceId);
         const targetNode = data.nodes.find(n => n.id === targetId);
         // Only keep links where both nodes are visible
-        return (sourceNode && sourceNode.type !== DeviceType.ACCESS_POINT) && (targetNode && targetNode.type !== DeviceType.ACCESS_POINT);
+        const sourceVisible = sourceNode && sourceNode.type !== DeviceType.ACCESS_POINT && sourceNode.type !== DeviceType.WORKSTATION;
+        const targetVisible = targetNode && targetNode.type !== DeviceType.ACCESS_POINT && targetNode.type !== DeviceType.WORKSTATION;
+        return sourceVisible && targetVisible;
     });
 
   useEffect(() => {
@@ -171,12 +174,12 @@ const TopologyMap: React.FC<TopologyMapProps> = ({ data, onNavigate }) => {
        {/* Filter Controls */}
        <div className="absolute top-4 left-4 z-10 bg-slate-800/90 backdrop-blur border border-slate-700 p-2 rounded-lg shadow-lg flex items-center gap-2">
            <Layers size={16} className="text-slate-400"/>
-           <span className="text-xs font-bold text-slate-300 mr-2">Layers:</span>
+           <span className="text-xs font-bold text-slate-300 mr-2">Core View:</span>
            <button 
                 onClick={() => setShowAccessLayer(!showAccessLayer)}
-                className={`px-3 py-1 rounded text-xs transition-colors ${showAccessLayer ? 'bg-primary-600 text-white' : 'bg-slate-700 text-slate-400'}`}
+                className={`px-3 py-1 rounded text-xs transition-colors font-medium ${showAccessLayer ? 'bg-primary-600 text-white' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
             >
-                {showAccessLayer ? 'Show Access Layer' : 'Hide Access Layer'}
+                {showAccessLayer ? 'Hiding Subscribers' : 'Show All Layers'}
            </button>
        </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Network, Server, Settings, MessageSquare, Menu, Bell, Search, User, FileCode, FileText, Wrench, Database, Shield, PieChart, Cable, Terminal, Clock, Rewind, Wifi, Archive, Lock, Maximize, Minimize, Users, Zap, Radio, Headphones } from 'lucide-react';
+import { LayoutDashboard, Network, Server, Settings, MessageSquare, Menu, Bell, Search, User, FileCode, FileText, Wrench, Database, Shield, PieChart, CreditCard, Terminal, Clock, Rewind, Wifi, Archive, Lock, Maximize, Minimize, Users, Zap, Radio, Headphones } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import DeviceList from './components/DeviceList';
 import TopologyMap from './components/TopologyMap';
@@ -11,7 +11,7 @@ import SettingsPage from './components/Settings';
 import Ipam from './components/Ipam';
 import SupportTickets from './components/SupportTickets';
 import Reports from './components/Reports';
-import PortManager from './components/PortManager';
+import BillingSystem from './components/BillingSystem';
 import Automation from './components/Automation';
 import WebTerminal from './components/WebTerminal';
 import NetworkDVR from './components/NetworkDVR';
@@ -24,7 +24,7 @@ import SubscriberManager from './components/SubscriberManager';
 import OltManager from './components/OltManager';
 import TrafficShaping from './components/TrafficShaping';
 import Login from './components/Login';
-import { Device, Alert, DeviceStatus, DeviceType, NetworkData, HotspotUser, AdminUser, BackupFile, AutomationTask, SecurityEvent, Subscriber, BandwidthPlan, OnuDevice, SupportTicket } from './types';
+import { Device, Alert, DeviceStatus, DeviceType, NetworkData, HotspotUser, AdminUser, BackupFile, AutomationTask, SecurityEvent, Subscriber, BandwidthPlan, OnuDevice, SupportTicket, Invoice } from './types';
 
 // -- Mock Configs --
 const CISCO_CONFIG = `
@@ -58,39 +58,13 @@ line vty 0 4
 end
 `;
 
-const SWITCH_CONFIG = `
-!
-version 15.2
-hostname Dist-Switch-A
-!
-vlan 10
- name SALES
-!
-vlan 20
- name HR
-!
-interface GigabitEthernet1/0/1
- switchport mode access
- switchport access vlan 10
-!
-interface GigabitEthernet1/0/2
- switchport mode access
- switchport access vlan 20
-!
-interface Vlan1
- ip address 10.0.1.1 255.255.255.0
-!
-end
-`;
-
 // -- Initial Data Sets --
 const INITIAL_DEVICES: Device[] = [
   { id: '1', name: 'Core-Router-01', ip: '10.0.0.1', mac: '00:1A:2B:3C:4D:5E', type: DeviceType.ROUTER, status: DeviceStatus.ONLINE, uptime: '45d 12h', location: 'Data Center A', lastSeen: 'Now', config: CISCO_CONFIG, cpu: 45, ram: 60, temp: 42 },
-  { id: '2', name: 'Dist-Switch-A', ip: '10.0.1.1', mac: '00:1A:2B:3C:4D:5F', type: DeviceType.SWITCH, status: DeviceStatus.ONLINE, uptime: '120d 4h', location: 'Building 1 - MDF', lastSeen: 'Now', config: SWITCH_CONFIG, cpu: 12, ram: 30, temp: 38 },
-  { id: '3', name: 'Dist-Switch-B', ip: '10.0.2.1', mac: '00:1A:2B:3C:4D:60', type: DeviceType.SWITCH, status: DeviceStatus.WARNING, uptime: '5d 2h', location: 'Building 2 - MDF', lastSeen: '2m ago', config: SWITCH_CONFIG.replace('Dist-Switch-A', 'Dist-Switch-B'), cpu: 88, ram: 40, temp: 55 },
-  { id: '4', name: 'Firewall-Main', ip: '10.0.0.254', mac: '00:1A:2B:3C:4D:61', type: DeviceType.FIREWALL, status: DeviceStatus.ONLINE, uptime: '200d 1h', location: 'Data Center A', lastSeen: 'Now', config: '# Firewall Rules\nallow 10.0.0.0/24 any', cpu: 25, ram: 50, temp: 40 },
-  { id: '5', name: 'Web-Server-01', ip: '10.0.10.5', mac: '00:1A:2B:3C:4D:62', type: DeviceType.SERVER, status: DeviceStatus.ONLINE, uptime: '12d 6h', location: 'Data Center A', lastSeen: 'Now', cpu: 10, ram: 80, temp: 35 },
   { id: '99', name: 'GPON-OLT-Huawei', ip: '10.0.200.1', mac: 'AA:BB:CC:DD:EE:FF', type: DeviceType.OLT, status: DeviceStatus.ONLINE, uptime: '120d', location: 'Server Room', lastSeen: 'Now', config: '', cpu: 20, ram: 40, temp: 38},
+  { id: '100', name: 'ZTE-OLT-C320', ip: '10.0.200.2', mac: '11:22:33:44:55:66', type: DeviceType.OLT, status: DeviceStatus.ONLINE, uptime: '30d', location: 'Dist Site B', lastSeen: 'Now', config: '', cpu: 15, ram: 50, temp: 40},
+  { id: '4', name: 'Edge-Firewall', ip: '10.0.0.254', mac: '00:1A:2B:3C:4D:61', type: DeviceType.FIREWALL, status: DeviceStatus.ONLINE, uptime: '200d 1h', location: 'Data Center A', lastSeen: 'Now', config: '# Firewall Rules\nallow 10.0.0.0/24 any', cpu: 25, ram: 50, temp: 40 },
+  { id: '5', name: 'Radius-Server-01', ip: '10.0.10.5', mac: '00:1A:2B:3C:4D:62', type: DeviceType.SERVER, status: DeviceStatus.ONLINE, uptime: '12d 6h', location: 'Data Center A', lastSeen: 'Now', cpu: 10, ram: 80, temp: 35 },
 ];
 
 const INITIAL_SUBSCRIBERS: Subscriber[] = [
@@ -131,7 +105,6 @@ const INITIAL_ADMINS: AdminUser[] = [
 const INITIAL_BACKUPS: BackupFile[] = [
     { id: '1', deviceId: '1', deviceName: 'Core-Router-01', filename: 'core-r1-20231027.cfg', size: '12 KB', date: 'Oct 27, 2023 02:00', type: 'Auto' },
     { id: '2', deviceId: '1', deviceName: 'Core-Router-01', filename: 'core-r1-20231026.cfg', size: '12 KB', date: 'Oct 26, 2023 02:00', type: 'Auto' },
-    { id: '3', deviceId: '2', deviceName: 'Dist-Switch-A', filename: 'dist-sw-a-pre-upgrade.cfg', size: '8 KB', date: 'Oct 25, 2023 14:30', type: 'Manual' },
 ];
 
 const INITIAL_TASKS: AutomationTask[] = [
@@ -153,9 +126,16 @@ const INITIAL_TICKETS: SupportTicket[] = [
     { id: '1003', subscriberName: 'New Resident', subject: 'Installation inquiry for 555 Pine St', status: 'Open', priority: 'Low', category: 'Installation', created: '1 hour ago', messages: [{sender: 'Customer', text: 'Do you cover this area?', time: '1 hour ago'}] },
 ];
 
+const INITIAL_INVOICES: Invoice[] = [
+    { id: 'INV-2023-001', subscriberId: '1', subscriberName: 'John Doe', amount: 49.99, status: 'Paid', dueDate: '2023-11-01', issueDate: '2023-10-01', items: ['Fiber 100 Mbps - Oct 2023'] },
+    { id: 'INV-2023-002', subscriberId: '2', subscriberName: 'Jane Smith', amount: 29.99, status: 'Paid', dueDate: '2023-11-01', issueDate: '2023-10-01', items: ['Fiber 50 Mbps - Oct 2023'] },
+    { id: 'INV-2023-003', subscriberId: '3', subscriberName: 'Coffee Shop LLC', amount: 150.00, status: 'Unpaid', dueDate: '2023-11-05', issueDate: '2023-10-05', items: ['Biz Fiber 500 - Oct 2023'] },
+    { id: 'INV-2023-004', subscriberId: '4', subscriberName: 'Late Payer', amount: 19.99, status: 'Overdue', dueDate: '2023-10-15', issueDate: '2023-09-15', items: ['Fiber 20 Mbps - Sept 2023'] },
+];
+
 const MOCK_ALERTS: Alert[] = [
-  { id: '1', severity: 'critical', message: 'Wifi-AP-Conf is unresponsive (timeout)', timestamp: '10:42 AM', deviceId: '8' },
-  { id: '2', severity: 'warning', message: 'Dist-Switch-B high CPU utilization (85%)', timestamp: '09:15 AM', deviceId: '3' },
+  { id: '1', severity: 'critical', message: 'OLT-Huawei-01 Power Supply Alarm', timestamp: '10:42 AM', deviceId: '99' },
+  { id: '2', severity: 'warning', message: 'High Latency to Upstream Provider A', timestamp: '09:15 AM', deviceId: '1' },
   { id: '3', severity: 'info', message: 'Scheduled backup completed for Core-Router-01', timestamp: '03:00 AM', deviceId: '1' },
 ];
 
@@ -177,7 +157,7 @@ const SidebarItem = ({ icon: Icon, label, active, onClick }: any) => (
 
 const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'topology' | 'ai' | 'config' | 'logs' | 'tools' | 'settings' | 'ipam' | 'tickets' | 'reports' | 'ports' | 'automation' | 'terminal' | 'dvr' | 'hotspot' | 'access' | 'backup' | 'security' | 'subscribers' | 'olt' | 'traffic'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'devices' | 'topology' | 'ai' | 'config' | 'logs' | 'tools' | 'settings' | 'ipam' | 'tickets' | 'reports' | 'billing' | 'automation' | 'terminal' | 'dvr' | 'hotspot' | 'access' | 'backup' | 'security' | 'subscribers' | 'olt' | 'traffic'>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [selectedConfigDevice, setSelectedConfigDevice] = useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -190,6 +170,7 @@ const App: React.FC = () => {
   const [automationTasks, setAutomationTasks] = useState<AutomationTask[]>(INITIAL_TASKS);
   const [threats, setThreats] = useState<SecurityEvent[]>(INITIAL_THREATS);
   const [tickets, setTickets] = useState<SupportTicket[]>(INITIAL_TICKETS);
+  const [invoices, setInvoices] = useState<Invoice[]>(INITIAL_INVOICES);
   
   // ISP STATE
   const [subscribers, setSubscribers] = useState<Subscriber[]>(INITIAL_SUBSCRIBERS);
@@ -270,14 +251,10 @@ const App: React.FC = () => {
       status: d.status
     })),
     links: [
-      { source: 'Core-Router-01', target: 'Firewall-Main', value: 5 },
-      { source: 'Core-Router-01', target: 'Dist-Switch-A', value: 3 },
-      { source: 'Core-Router-01', target: 'Dist-Switch-B', value: 3 },
-      { source: 'Dist-Switch-A', target: 'Web-Server-01', value: 1 },
-      { source: 'Dist-Switch-A', target: 'DB-Server-01', value: 1 },
-      { source: 'Dist-Switch-B', target: 'Wifi-AP-Lobby', value: 1 },
-      { source: 'Dist-Switch-B', target: 'Wifi-AP-Conf', value: 1 },
+      { source: 'Core-Router-01', target: 'Edge-Firewall', value: 5 },
       { source: 'Core-Router-01', target: 'GPON-OLT-Huawei', value: 3},
+      { source: 'Core-Router-01', target: 'ZTE-OLT-C320', value: 3},
+      { source: 'Core-Router-01', target: 'Radius-Server-01', value: 1},
     ].filter(l => 
         // Filter links if devices are deleted
         devices.some(d => d.name === l.source) && devices.some(d => d.name === l.target)
@@ -290,7 +267,7 @@ const App: React.FC = () => {
 
   // Helper to determine if a tab scrolls or is fixed height
   const isScrollableTab = (tab: string) => {
-      return ['dashboard', 'reports', 'settings'].includes(tab);
+      return ['dashboard', 'reports', 'settings', 'billing'].includes(tab);
   };
 
   return (
@@ -323,14 +300,14 @@ const App: React.FC = () => {
           
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">ISP Operations</div>
           <SidebarItem icon={Users} label="Subscribers" active={activeTab === 'subscribers'} onClick={() => setActiveTab('subscribers')} />
+          <SidebarItem icon={CreditCard} label="Billing & Invoices" active={activeTab === 'billing'} onClick={() => setActiveTab('billing')} />
           <SidebarItem icon={Headphones} label="Helpdesk / Support" active={activeTab === 'tickets'} onClick={() => setActiveTab('tickets')} />
           <SidebarItem icon={Radio} label="OLT & PON" active={activeTab === 'olt'} onClick={() => setActiveTab('olt')} />
           <SidebarItem icon={Zap} label="Traffic Shaping" active={activeTab === 'traffic'} onClick={() => setActiveTab('traffic')} />
-          <SidebarItem icon={Wifi} label="Hotspot Manager" active={activeTab === 'hotspot'} onClick={() => setActiveTab('hotspot')} />
+          <SidebarItem icon={Wifi} label="Public WiFi" active={activeTab === 'hotspot'} onClick={() => setActiveTab('hotspot')} />
           
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 mt-6 px-2">Network Mgmt</div>
           <SidebarItem icon={Database} label="IPAM" active={activeTab === 'ipam'} onClick={() => setActiveTab('ipam')} />
-          <SidebarItem icon={Cable} label="Port Mapper" active={activeTab === 'ports'} onClick={() => setActiveTab('ports')} />
           <SidebarItem icon={FileCode} label="Configuration" active={activeTab === 'config'} onClick={() => setActiveTab('config')} />
           <SidebarItem icon={Archive} label="Backups" active={activeTab === 'backup'} onClick={() => setActiveTab('backup')} />
           <SidebarItem icon={Clock} label="Automation" active={activeTab === 'automation'} onClick={() => setActiveTab('automation')} />
@@ -401,10 +378,11 @@ const App: React.FC = () => {
           
           <div key={activeTab} className="h-full w-full animate-fade-in flex flex-col">
             {isScrollableTab(activeTab) ? (
-                // Scrollable Document View (Dashboard, Reports, Settings)
+                // Scrollable Document View (Dashboard, Reports, Settings, Billing)
                 <div className="flex-1 overflow-y-auto p-6">
                   {activeTab === 'dashboard' && <Dashboard devices={devices} alerts={MOCK_ALERTS} />}
                   {activeTab === 'reports' && <Reports />}
+                  {activeTab === 'billing' && <BillingSystem invoices={invoices} setInvoices={setInvoices} />}
                   {activeTab === 'settings' && <SettingsPage />}
                 </div>
             ) : (
@@ -434,7 +412,6 @@ const App: React.FC = () => {
                   {activeTab === 'tools' && <NetworkTools />}
                   {activeTab === 'logs' && <LogViewer />}
                   {activeTab === 'ai' && <AiAssistant devices={devices} alerts={MOCK_ALERTS} />}
-                  {activeTab === 'ports' && <PortManager />}
                   {activeTab === 'automation' && <Automation tasks={automationTasks} setTasks={setAutomationTasks} />}
                   {activeTab === 'terminal' && <WebTerminal />}
                   {activeTab === 'dvr' && <NetworkDVR devices={devices} />}

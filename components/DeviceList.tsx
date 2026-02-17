@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Device, DeviceStatus, DeviceType, RouterOSResource, RouterOSInterface } from '../types';
 import { fetchSystemHealth, MikrotikCredentials } from '../services/mikrotikService';
-import { Search, Plus, Filter, MoreVertical, Wifi, Server, Shield, Globe, Settings, Edit, Trash2, X, Check, Loader2, Radar, Cpu, HardDrive, Activity, Eye, Zap, Lock } from 'lucide-react';
+import { Search, Plus, Filter, MoreVertical, Wifi, Server, Shield, Globe, Settings, Edit, Trash2, X, Check, Loader2, Radar, Cpu, HardDrive, Activity, Eye, Zap, Lock, Radio } from 'lucide-react';
 
 interface DeviceListProps {
   devices: Device[];
@@ -16,15 +16,15 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
   const [isScanOpen, setIsScanOpen] = useState(false);
   
   // Scan State
-  const [scanSubnet, setScanSubnet] = useState('192.168.1.0/24');
+  const [scanSubnet, setScanSubnet] = useState('10.200.0.0/24');
   const [isScanning, setIsScanning] = useState(false);
   const [foundDevices, setFoundDevices] = useState<Partial<Device>[]>([]);
   
   // Add Manual State
   const [newDevice, setNewDevice] = useState<Partial<Device>>({
-    type: DeviceType.SERVER,
+    type: DeviceType.ROUTER,
     status: DeviceStatus.ONLINE,
-    location: 'Data Center',
+    location: 'Core Room',
     config: 'hostname new-device\n!'
   });
 
@@ -47,7 +47,7 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
     const device = createDeviceObject(newDevice);
     onAddDevice(device);
     setIsModalOpen(false);
-    setNewDevice({ type: DeviceType.SERVER, status: DeviceStatus.ONLINE, config: 'hostname new-device\n!' });
+    setNewDevice({ type: DeviceType.ROUTER, status: DeviceStatus.ONLINE, config: 'hostname new-device\n!' });
   };
 
   const createDeviceObject = (partial: Partial<Device>): Device => ({
@@ -70,15 +70,15 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
     setIsScanning(true);
     setFoundDevices([]);
     
-    // Simulate Scan Process
+    // Simulate Scan Process - ISP Oriented
     setTimeout(() => {
-        setFoundDevices(prev => [...prev, { name: 'HP-LaserJet-Pro', ip: '192.168.1.45', type: DeviceType.WORKSTATION, mac: '00:1B:44:11:3A:B7', location: 'Office' }]);
+        setFoundDevices(prev => [...prev, { name: 'MikroTik-CCR1036', ip: '10.200.0.5', type: DeviceType.ROUTER, mac: 'D4:CA:6D:11:22:33', location: 'Distribution Site A' }]);
     }, 1000);
     setTimeout(() => {
-        setFoundDevices(prev => [...prev, { name: 'Backup-NAS-02', ip: '192.168.1.200', type: DeviceType.SERVER, mac: '00:11:32:XX:XX:XX', location: 'Server Room' }]);
+        setFoundDevices(prev => [...prev, { name: 'ZTE-OLT-C320', ip: '10.200.0.10', type: DeviceType.OLT, mac: 'CC:DD:EE:AA:BB:CC', location: 'Server Room' }]);
     }, 2000);
     setTimeout(() => {
-        setFoundDevices(prev => [...prev, { name: 'Unknown-IoT-Device', ip: '192.168.1.105', type: DeviceType.ACCESS_POINT, mac: 'AC:84:C6:11:22:33', location: 'Lobby' }]);
+        setFoundDevices(prev => [...prev, { name: 'CPE-Huawei-HG8245', ip: '10.200.0.45', type: DeviceType.ACCESS_POINT, mac: '48:EA:63:XX:XX:XX', location: 'Customer Premise' }]);
         setIsScanning(false);
     }, 3000);
   };
@@ -123,6 +123,7 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
       case DeviceType.SERVER: return <Server size={18} className="text-purple-400"/>;
       case DeviceType.FIREWALL: return <Shield size={18} className="text-red-400"/>;
       case DeviceType.ACCESS_POINT: return <Wifi size={18} className="text-green-400"/>;
+      case DeviceType.OLT: return <Radio size={18} className="text-yellow-400"/>;
       default: return <Server size={18} className="text-slate-400"/>;
     }
   };
@@ -166,14 +167,14 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
                 className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg transition-colors border border-slate-600 group"
             >
                 <Radar size={18} className="group-hover:text-primary-400" />
-                <span>Scan Network</span>
+                <span>Scan Subnet</span>
             </button>
             <button 
                 onClick={() => setIsModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-500 text-white rounded-lg transition-colors shadow-lg"
             >
                 <Plus size={18} />
-                <span>Add Device</span>
+                <span>Add Node</span>
             </button>
         </div>
       </div>
@@ -263,18 +264,18 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
                 <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900">
-                    <h3 className="text-lg font-bold text-white">Add New Device</h3>
+                    <h3 className="text-lg font-bold text-white">Add Infrastructure</h3>
                     <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white"><X size={20}/></button>
                 </div>
                 <form onSubmit={handleAddSubmit} className="p-6 space-y-4">
                     <div>
-                        <label className="block text-xs font-medium text-slate-400 mb-1">Device Name</label>
-                        <input type="text" required value={newDevice.name || ''} onChange={e => setNewDevice({...newDevice, name: e.target.value})} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:ring-1 focus:ring-primary-500 outline-none" placeholder="e.g. Switch-Floor-1" />
+                        <label className="block text-xs font-medium text-slate-400 mb-1">Hostname</label>
+                        <input type="text" required value={newDevice.name || ''} onChange={e => setNewDevice({...newDevice, name: e.target.value})} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:ring-1 focus:ring-primary-500 outline-none" placeholder="e.g. CORE-MIKROTIK-01" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs font-medium text-slate-400 mb-1">IP Address</label>
-                            <input type="text" required value={newDevice.ip || ''} onChange={e => setNewDevice({...newDevice, ip: e.target.value})} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:ring-1 focus:ring-primary-500 outline-none" placeholder="192.168.1.1" />
+                            <input type="text" required value={newDevice.ip || ''} onChange={e => setNewDevice({...newDevice, ip: e.target.value})} className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-white focus:ring-1 focus:ring-primary-500 outline-none" placeholder="10.x.x.x" />
                         </div>
                         <div>
                              <label className="block text-xs font-medium text-slate-400 mb-1">Type</label>
@@ -304,7 +305,7 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
              <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[80vh]">
                  <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Radar size={20} className="text-primary-500"/> Network Discovery
+                        <Radar size={20} className="text-primary-500"/> ISP Network Discovery
                     </h3>
                     <button onClick={() => setIsScanOpen(false)} className="text-slate-400 hover:text-white"><X size={20}/></button>
                  </div>
@@ -334,7 +335,7 @@ const DeviceList: React.FC<DeviceListProps> = ({ devices, onConfigure, onAddDevi
                  <div className="flex-1 overflow-y-auto p-4 bg-slate-950/50">
                      {foundDevices.length === 0 && !isScanning && (
                          <div className="text-center py-10 text-slate-500">
-                             Enter a subnet and click scan to discover devices.
+                             Enter a subnet and click scan to discover OLTs, Routers, and CPEs.
                          </div>
                      )}
                      

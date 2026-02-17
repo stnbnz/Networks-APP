@@ -252,3 +252,14 @@ export interface SupportTicket {
   assignedTo?: string;
   messages: { sender: string; text: string; time: string }[];
 }
+
+export interface Invoice {
+  id: string;
+  subscriberId: string;
+  subscriberName: string;
+  amount: number;
+  status: 'Paid' | 'Unpaid' | 'Overdue' | 'Cancelled';
+  dueDate: string;
+  issueDate: string;
+  items: string[]; // Simple description e.g., "Internet Oct 2023"
+}
